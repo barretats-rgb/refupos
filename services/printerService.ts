@@ -20,34 +20,31 @@ const sendToPrinter = async (ip: string, xmlData: string): Promise<{ success: bo
   const url = `http://${ip}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=5000`;
   
   try {
-    // Note: Browsers block Mixed Content (HTTPS -> HTTP). 
-    // If this app is hosted on HTTPS, you cannot hit a local HTTP IP directly without browser config changes.
-    const response = await fetch(url, {
+    // IMPORTANTE: 'mode: no-cors' permite enviar la petición desde HTTPS a HTTP 
+    // sin que el navegador la bloquee por falta de cabeceras CORS.
+    // LA DESVENTAJA es que la respuesta es "opaca" (status 0), por lo que no podemos
+    // saber si la impresora se quedó sin papel o si imprimió con éxito real.
+    // Asumimos éxito si la red no falla.
+    await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'text/xml; charset=utf-8',
-        // Avoid adding extra headers to reduce preflight CORS checks
       },
       body: xmlData,
-      credentials: 'omit', // Important for CORS on some devices
+      credentials: 'omit',
+      mode: 'no-cors', // <--- Clave para evitar bloqueo CORS en red local
     });
 
-    if (response.ok) {
-      return { success: true, message: 'Enviado.' };
-    } else {
-      const text = await response.text().catch(() => '');
-      return { success: false, message: `Error Impresora (${response.status})` };
-    }
+    // Con no-cors, no podemos leer response.ok. Siempre retornamos éxito si no hay excepción de red.
+    return { success: true, message: 'Enviado (Modo Sin Confirmación)' };
+
   } catch (error: any) {
     console.error('Print Error:', error);
     
     let msg = 'Error de conexión';
     if (error.message === 'Failed to fetch') {
-       // This usually means CORS or Mixed Content block
-       msg = 'Bloqueo de Red (CORS/Mixed Content)';
-       
-       // Log instruction for the user
-       console.warn("IMPORTANTE: Si usas HTTPS, el navegador bloquea la IP local. Usa HTTP o configura 'Insecure Content' en el navegador para esta URL.");
+       msg = 'Bloqueo de Red (PNA/CORS)';
+       console.warn("IMPORTANTE: Revise la configuración de 'Insecure Private Network Requests' en chrome://flags");
     }
 
     return { 

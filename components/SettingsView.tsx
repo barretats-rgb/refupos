@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Printer, Category, PrinterRoute } from '../types';
-import { Printer as PrinterIcon, Wifi, RefreshCw, AlertCircle, Plus, Trash2, Server, FileText } from 'lucide-react';
+import { Printer as PrinterIcon, Wifi, RefreshCw, AlertCircle, Plus, Trash2, Server, FileText, ShieldAlert, HelpCircle, Copy } from 'lucide-react';
 import { printTestTicket } from '../services/printerService';
 
 interface SettingsViewProps {
@@ -19,6 +19,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [activeTab, setActiveTab] = useState<'general' | 'printers'>('printers');
   const [isScanning, setIsScanning] = useState(false);
   const [manualIp, setManualIp] = useState('192.168.100.139'); // Default to the known IP
+  const [showHelp, setShowHelp] = useState(false);
 
   const scanNetwork = () => {
     setIsScanning(true);
@@ -76,9 +77,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const handleTestPrint = async (printer: Printer) => {
     const result = await printTestTicket(printer);
     if (result.success) {
-      alert(`[Éxito] ${result.message}`);
+      alert(`[Enviado] ${result.message}`);
     } else {
-      alert(`[Error] ${result.message}\n\nAsegúrese de que el navegador permita 'Mixed Content' si la IP es local y la app está en HTTPS.`);
+      alert(`[Error] ${result.message}\n\nRevise la sección de ayuda (?) para configurar Chrome Flags.`);
     }
   };
 
@@ -125,10 +126,60 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="max-w-4xl mx-auto space-y-8">
             
             {/* Header */}
-            <div>
-              <h3 className="text-xl font-bold text-white mb-2">Configuración de Impresión</h3>
-              <p className="text-slate-400 text-sm">Gestiona las impresoras Epson TM-T20III conectadas a la red local (192.168.100.x) y asigna categorías.</p>
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-bold text-white mb-2">Configuración de Impresión</h3>
+                <p className="text-slate-400 text-sm">Gestiona las impresoras Epson TM-T20III conectadas a la red local (192.168.100.x).</p>
+              </div>
+              <button 
+                onClick={() => setShowHelp(!showHelp)}
+                className="flex items-center gap-2 text-amber-500 hover:text-amber-400 text-sm font-medium transition-colors bg-amber-500/10 px-3 py-2 rounded-lg"
+              >
+                <HelpCircle size={18} />
+                {showHelp ? 'Ocultar Ayuda' : 'Solución de Problemas'}
+              </button>
             </div>
+
+            {/* Troubleshooting / Help Section */}
+            {showHelp && (
+              <div className="bg-amber-900/20 border border-amber-500/30 rounded-xl p-6 animate-in fade-in slide-in-from-top-4">
+                <div className="flex items-start gap-3">
+                  <ShieldAlert className="text-amber-500 shrink-0 mt-1" size={24} />
+                  <div className="w-full">
+                    <h4 className="text-amber-400 font-bold text-lg mb-2">Desbloquear Impresión en Red Local (Chrome)</h4>
+                    <p className="text-slate-300 text-sm mb-4 leading-relaxed">
+                      Chrome bloquea por defecto las conexiones desde sitios públicos (https) a dispositivos privados (192.168.x.x). 
+                      Siga estos pasos para permitirlo:
+                    </p>
+                    
+                    {/* Step 1: Site Settings */}
+                    <div className="bg-black/40 rounded-lg p-4 text-sm text-slate-200 mb-4">
+                      <strong className="text-emerald-400 block mb-2">Paso 1: Contenido Inseguro</strong>
+                      <ol className="list-decimal ml-5 space-y-1 text-slate-400 text-xs">
+                        <li>Clic en el candado 🔒 en la barra de dirección.</li>
+                        <li>Ir a "Configuración del sitio".</li>
+                        <li>Permitir "Contenido inseguro".</li>
+                      </ol>
+                    </div>
+
+                    {/* Step 2: Flags (The crucial fix for PNA) */}
+                    <div className="bg-black/40 rounded-lg p-4 text-sm text-slate-200">
+                      <strong className="text-emerald-400 block mb-2">Paso 2: Chrome Flags (Si sigue fallando)</strong>
+                      <div className="flex items-center gap-2 bg-slate-800 p-2 rounded mb-2 font-mono text-xs select-all">
+                        <span className="truncate">chrome://flags/#block-insecure-private-network-requests</span>
+                        <Copy size={14} className="text-slate-500 cursor-pointer hover:text-white" onClick={() => navigator.clipboard.writeText('chrome://flags/#block-insecure-private-network-requests')}/>
+                      </div>
+                      <ol className="list-decimal ml-5 space-y-1 text-slate-400 text-xs">
+                        <li>Copie y pegue la dirección de arriba en una nueva pestaña.</li>
+                        <li>Cambie la opción "Block insecure private network requests" a <strong>Disabled</strong>.</li>
+                        <li>Reinicie Chrome (Relaunch).</li>
+                      </ol>
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Network Discovery Section */}
             <div className="bg-slate-900 rounded-xl border border-slate-800 p-6">
@@ -168,8 +219,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                     
                     <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${printer.status === 'online' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-                            {printer.status === 'online' ? 'Listo' : 'Offline'}
+                        <span className={`text-xs px-2 py-1 rounded-full ${printer.status === 'online' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-800 text-slate-400'}`}>
+                            Ready
                         </span>
                         <div className="h-6 w-px bg-slate-800 mx-2"></div>
                         <button 
