@@ -357,13 +357,13 @@ export const OrderView: React.FC<OrderViewProps> = ({
                      <span className="leading-tight">{printError}</span>
                    </div>
                    
-                   {/* Fallback Button */}
+                   {/* Fallback Button - Highlighted if error */}
                    <button 
                      onClick={handleNativePrint}
-                     className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-bold text-xs shadow-lg flex items-center justify-center gap-2 transition-colors"
+                     className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-bold text-sm shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-colors animate-pulse"
                    >
-                      <FileText size={14} />
-                      Imprimir Ticket (Tablet/Nativo)
+                      <FileText size={16} />
+                      IMPRIMIR TICKET (Respaldo)
                    </button>
                  </div>
                )}

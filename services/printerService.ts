@@ -20,19 +20,20 @@ const sendToPrinter = async (ip: string, xmlData: string): Promise<{ success: bo
   const url = `http://${ip}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=5000`;
   
   try {
-    // IMPORTANTE: 'mode: no-cors' permite enviar la petición desde HTTPS a HTTP 
-    // sin que el navegador la bloquee por falta de cabeceras CORS.
-    // LA DESVENTAJA es que la respuesta es "opaca" (status 0), por lo que no podemos
-    // saber si la impresora se quedó sin papel o si imprimió con éxito real.
-    // Asumimos éxito si la red no falla.
+    // TRUCO DE SEGURIDAD (Bypass CORS Preflight):
+    // Cambiamos el Content-Type a 'text/plain'.
+    // Los navegadores permiten enviar text/plain sin hacer la pregunta de seguridad (OPTIONS preflight)
+    // que suele bloquear las conexiones a redes locales (PNA).
+    // Las impresoras Epson inteligentes suelen ser capaces de leer el XML dentro del cuerpo 
+    // aunque la cabecera diga que es texto plano.
     await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'text/xml; charset=utf-8',
+        'Content-Type': 'text/plain; charset=utf-8', 
       },
       body: xmlData,
       credentials: 'omit',
-      mode: 'no-cors', // <--- Clave para evitar bloqueo CORS en red local
+      mode: 'no-cors', 
     });
 
     // Con no-cors, no podemos leer response.ok. Siempre retornamos éxito si no hay excepción de red.

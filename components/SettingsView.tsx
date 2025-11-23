@@ -79,7 +79,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (result.success) {
       alert(`[Enviado] ${result.message}`);
     } else {
-      alert(`[Error] ${result.message}\n\nRevise la sección de ayuda (?) para configurar Chrome Flags.`);
+      alert(`[Error] ${result.message}\n\nRevise la sección de ayuda (?) para ver soluciones.`);
     }
   };
 
@@ -148,34 +148,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <div className="w-full">
                     <h4 className="text-amber-400 font-bold text-lg mb-2">Desbloquear Impresión en Red Local (Chrome)</h4>
                     <p className="text-slate-300 text-sm mb-4 leading-relaxed">
-                      Chrome bloquea por defecto las conexiones desde sitios públicos (https) a dispositivos privados (192.168.x.x). 
-                      Siga estos pasos para permitirlo:
+                      Google Chrome bloquea las conexiones desde sitios web seguros (HTTPS) a tu impresora local (IP Privada) por seguridad.
                     </p>
                     
-                    {/* Step 1: Site Settings */}
-                    <div className="bg-black/40 rounded-lg p-4 text-sm text-slate-200 mb-4">
-                      <strong className="text-emerald-400 block mb-2">Paso 1: Contenido Inseguro</strong>
-                      <ol className="list-decimal ml-5 space-y-1 text-slate-400 text-xs">
-                        <li>Clic en el candado 🔒 en la barra de dirección.</li>
-                        <li>Ir a "Configuración del sitio".</li>
-                        <li>Permitir "Contenido inseguro".</li>
-                      </ol>
+                    {/* Native Print Recommendation - Primary solution now */}
+                    <div className="bg-emerald-900/40 border border-emerald-500/30 rounded-lg p-4 text-sm text-slate-200 mb-4">
+                        <strong className="text-emerald-400 block mb-2">Solución Recomendada (Tablet/Móvil)</strong>
+                        <p className="text-xs text-slate-300">
+                           Debido a que Google oculta constantemente las opciones de configuración, la forma más fiable es utilizar el botón 
+                           <span className="font-bold text-white mx-1">"Impresión Nativa"</span> que aparece al cobrar si la conexión directa falla.
+                           Esto utiliza el sistema de impresión de tu iPad o Android.
+                        </p>
                     </div>
 
-                    {/* Step 2: Flags (The crucial fix for PNA) */}
-                    <div className="bg-black/40 rounded-lg p-4 text-sm text-slate-200">
-                      <strong className="text-emerald-400 block mb-2">Paso 2: Chrome Flags (Si sigue fallando)</strong>
+                    {/* Step 2: Flags (Legacy/Desktop) */}
+                    <div className="bg-black/40 rounded-lg p-4 text-sm text-slate-200 opacity-80">
+                      <strong className="text-slate-400 block mb-2">Intento Manual (Solo PC/Laptop)</strong>
                       <div className="flex items-center gap-2 bg-slate-800 p-2 rounded mb-2 font-mono text-xs select-all">
-                        <span className="truncate">chrome://flags/#block-insecure-private-network-requests</span>
-                        <Copy size={14} className="text-slate-500 cursor-pointer hover:text-white" onClick={() => navigator.clipboard.writeText('chrome://flags/#block-insecure-private-network-requests')}/>
+                        <span className="truncate">chrome://flags</span>
+                        <Copy size={14} className="text-slate-500 cursor-pointer hover:text-white" onClick={() => navigator.clipboard.writeText('chrome://flags')}/>
                       </div>
-                      <ol className="list-decimal ml-5 space-y-1 text-slate-400 text-xs">
-                        <li>Copie y pegue la dirección de arriba en una nueva pestaña.</li>
-                        <li>Cambie la opción "Block insecure private network requests" a <strong>Disabled</strong>.</li>
-                        <li>Reinicie Chrome (Relaunch).</li>
-                      </ol>
+                      <p className="text-xs text-slate-400 mb-2">Busque <strong>"Private Network"</strong> y ponga todo en <strong>Disabled</strong>.</p>
+                      <p className="text-[10px] text-amber-500/80 italic">Nota: Si no encuentra estas opciones, Google las ha eliminado en su versión. Use la solución recomendada arriba.</p>
                     </div>
-                    
                   </div>
                 </div>
               </div>
