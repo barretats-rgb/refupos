@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Refugio POS</title>
     <!-- Mantenemos Tailwind CDN por simplicidad en la demo, pero para prod idealmente se usa postcss -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -34,12 +34,16 @@
           height: 0;
           overflow: hidden;
         }
-        #printable-area, #printable-area * {
+        /* Whitelist specific printable areas */
+        #printable-area, #printable-area *, 
+        #printable-test-ticket, #printable-test-ticket * {
           visibility: visible;
           height: auto;
           overflow: visible;
         }
-        #printable-area {
+        
+        /* Positioning logic for printables */
+        #printable-area, #printable-test-ticket {
           position: absolute;
           left: 0;
           top: 0;
@@ -59,7 +63,7 @@
         }
       }
     </style>
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
     "react": "https://aistudiocdn.com/react@^19.2.0",

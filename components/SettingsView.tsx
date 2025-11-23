@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Printer, Category, PrinterRoute } from '../types';
 import { Printer as PrinterIcon, Wifi, RefreshCw, AlertCircle, Plus, Trash2, Server, FileText, ShieldAlert, HelpCircle, Copy } from 'lucide-react';
-import { printTestTicket } from '../services/printerService';
 
 interface SettingsViewProps {
   printers: Printer[];
@@ -20,6 +19,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [isScanning, setIsScanning] = useState(false);
   const [manualIp, setManualIp] = useState('192.168.100.139'); // Default to the known IP
   const [showHelp, setShowHelp] = useState(false);
+  const [printerForTest, setPrinterForTest] = useState<Printer | null>(null);
 
   const scanNetwork = () => {
     setIsScanning(true);
@@ -74,13 +74,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     ));
   };
 
-  const handleTestPrint = async (printer: Printer) => {
-    const result = await printTestTicket(printer);
-    if (result.success) {
-      alert(`[Enviado] ${result.message}`);
-    } else {
-      alert(`[Error] ${result.message}\n\nRevise la sección de ayuda (?) para ver soluciones.`);
-    }
+  const handleTestPrint = (printer: Printer) => {
+    setPrinterForTest(printer);
+    // Small delay to allow React to render the hidden ticket with the correct state before printing
+    setTimeout(() => {
+        window.print();
+    }, 100);
   };
 
   // Group categories for cleaner UI
@@ -91,7 +90,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     <div className="flex h-full bg-slate-950 text-slate-100 overflow-hidden">
       
       {/* Settings Sidebar */}
-      <div className="w-64 bg-slate-900 border-r border-slate-800 p-6">
+      <div className="w-64 bg-slate-900 border-r border-slate-800 p-6 hidden md:block">
         <h2 className="text-2xl font-bold mb-8 text-white">Ajustes</h2>
         
         <nav className="space-y-2">
@@ -120,7 +119,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-8">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8">
         
         {activeTab === 'printers' && (
           <div className="max-w-4xl mx-auto space-y-8">
@@ -129,14 +128,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-xl font-bold text-white mb-2">Configuración de Impresión</h3>
-                <p className="text-slate-400 text-sm">Gestiona las impresoras Epson TM-T20III conectadas a la red local (192.168.100.x).</p>
+                <p className="text-slate-400 text-sm">Gestiona las impresoras Epson TM-T20III.</p>
               </div>
               <button 
                 onClick={() => setShowHelp(!showHelp)}
                 className="flex items-center gap-2 text-amber-500 hover:text-amber-400 text-sm font-medium transition-colors bg-amber-500/10 px-3 py-2 rounded-lg"
               >
                 <HelpCircle size={18} />
-                {showHelp ? 'Ocultar Ayuda' : 'Solución de Problemas'}
+                <span className="hidden sm:inline">{showHelp ? 'Ocultar Ayuda' : 'Ayuda'}</span>
               </button>
             </div>
 
@@ -146,30 +145,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <div className="flex items-start gap-3">
                   <ShieldAlert className="text-amber-500 shrink-0 mt-1" size={24} />
                   <div className="w-full">
-                    <h4 className="text-amber-400 font-bold text-lg mb-2">Desbloquear Impresión en Red Local (Chrome)</h4>
+                    <h4 className="text-amber-400 font-bold text-lg mb-2">Impresión en Android/iOS</h4>
                     <p className="text-slate-300 text-sm mb-4 leading-relaxed">
-                      Google Chrome bloquea las conexiones desde sitios web seguros (HTTPS) a tu impresora local (IP Privada) por seguridad.
+                      Para garantizar la impresión sin errores de conexión (SSL/CORS), el sistema utiliza la 
+                      <strong className="text-white ml-1">Impresión Nativa</strong> de tu tablet.
                     </p>
-                    
-                    {/* Native Print Recommendation - Primary solution now */}
                     <div className="bg-emerald-900/40 border border-emerald-500/30 rounded-lg p-4 text-sm text-slate-200 mb-4">
-                        <strong className="text-emerald-400 block mb-2">Solución Recomendada (Tablet/Móvil)</strong>
-                        <p className="text-xs text-slate-300">
-                           Debido a que Google oculta constantemente las opciones de configuración, la forma más fiable es utilizar el botón 
-                           <span className="font-bold text-white mx-1">"Impresión Nativa"</span> que aparece al cobrar si la conexión directa falla.
-                           Esto utiliza el sistema de impresión de tu iPad o Android.
-                        </p>
-                    </div>
-
-                    {/* Step 2: Flags (Legacy/Desktop) */}
-                    <div className="bg-black/40 rounded-lg p-4 text-sm text-slate-200 opacity-80">
-                      <strong className="text-slate-400 block mb-2">Intento Manual (Solo PC/Laptop)</strong>
-                      <div className="flex items-center gap-2 bg-slate-800 p-2 rounded mb-2 font-mono text-xs select-all">
-                        <span className="truncate">chrome://flags</span>
-                        <Copy size={14} className="text-slate-500 cursor-pointer hover:text-white" onClick={() => navigator.clipboard.writeText('chrome://flags')}/>
-                      </div>
-                      <p className="text-xs text-slate-400 mb-2">Busque <strong>"Private Network"</strong> y ponga todo en <strong>Disabled</strong>.</p>
-                      <p className="text-[10px] text-amber-500/80 italic">Nota: Si no encuentra estas opciones, Google las ha eliminado en su versión. Use la solución recomendada arriba.</p>
+                        <strong className="text-emerald-400 block mb-2">Cómo funciona:</strong>
+                        <ul className="list-disc pl-4 space-y-1 text-xs text-slate-300">
+                          <li>Al pulsar "Imprimir", se abrirá el diálogo del sistema.</li>
+                          <li>Asegúrate de que tu tablet está conectada a la misma red WiFi que la impresora.</li>
+                          <li>Selecciona la impresora Epson en el menú que aparece.</li>
+                        </ul>
                     </div>
                   </div>
                 </div>
@@ -181,7 +168,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="flex justify-between items-center mb-6">
                 <h4 className="font-semibold flex items-center gap-2">
                   <Wifi size={18} className="text-emerald-500" />
-                  Dispositivos en Red
+                  Dispositivos
                 </h4>
                 <button 
                   onClick={scanNetwork}
@@ -189,14 +176,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-amber-500 transition-colors disabled:opacity-50"
                 >
                   <RefreshCw size={16} className={isScanning ? 'animate-spin' : ''} />
-                  {isScanning ? 'Escaneando 192.168.100.x...' : 'Buscar Impresoras'}
+                  {isScanning ? 'Buscando...' : 'Buscar Impresoras'}
                 </button>
               </div>
 
               {/* Printer List */}
               <div className="space-y-3">
                 {printers.map(printer => (
-                  <div key={printer.id} className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800 group">
+                  <div key={printer.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800 group gap-4">
                     <div className="flex items-center gap-4">
                       <div className={`p-3 rounded-lg ${printer.status === 'online' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
                         <PrinterIcon size={24} />
@@ -208,22 +195,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         </div>
                         <div className="text-xs text-slate-500 font-mono mt-0.5 flex gap-3">
                             <span>IP: {printer.ip}</span>
-                            <span>Model: {printer.model}</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${printer.status === 'online' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-800 text-slate-400'}`}>
-                            Ready
-                        </span>
-                        <div className="h-6 w-px bg-slate-800 mx-2"></div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                         <button 
                             onClick={() => handleTestPrint(printer)}
-                            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg" 
-                            title="Prueba de impresión"
+                            className="flex items-center gap-2 px-3 py-2 bg-amber-500 hover:bg-amber-400 text-white rounded-lg text-sm shadow-lg shadow-amber-500/20" 
+                            title="Prueba nativa"
                         >
-                            <FileText size={18} />
+                            <FileText size={16} />
+                            <span className="hidden sm:inline">Prueba</span>
                         </button>
                         <button 
                             onClick={() => deletePrinter(printer.id)}
@@ -336,6 +319,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <p>Configuración general en construcción.</p>
            </div>
         )}
+
+        {/* HIDDEN TEST TICKET FOR NATIVE PRINTING */}
+        <div id="printable-test-ticket" style={{ display: 'none' }}>
+           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+               <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>REFUGIO POS</h2>
+               <p style={{ margin: 0, fontSize: '14px' }}>Ticket de Prueba</p>
+               <p style={{ margin: '10px 0', borderBottom: '1px dashed black' }}></p>
+           </div>
+           <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
+               <p><strong>Impresora:</strong> {printerForTest?.name || 'Desconocida'}</p>
+               <p><strong>Modelo:</strong> {printerForTest?.model || 'Desconocido'}</p>
+               <p><strong>IP Configurada:</strong> {printerForTest?.ip || '---'}</p>
+               <p><strong>Fecha:</strong> {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</p>
+           </div>
+           <div style={{ marginTop: '20px', borderTop: '1px dashed black', paddingTop: '10px', textAlign: 'center' }}>
+               <p style={{ fontSize: '14px', fontWeight: 'bold' }}>CONEXIÓN OK</p>
+               <p style={{ fontSize: '10px' }}>Si puede leer esto, la impresión nativa funciona correctamente.</p>
+           </div>
+        </div>
+
       </div>
     </div>
   );
